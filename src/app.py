@@ -1,12 +1,20 @@
 import os
+# Force CPU and disable JIT/LLVM compilers that clash between Torch and TensorFlow
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
+os.environ["PYTORCH_JIT"] = "0"
+os.environ["PYTORCH_TENSOREXPR_DONT_USE_LLVM"] = "1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
-# Disable CUDA in PyTorch before any framework initializes C++ CUDA/LLVM bindings
+# Disable CUDA and JIT profiling in PyTorch before any framework initializes C++ CUDA/LLVM bindings
 try:
     import torch
     torch.cuda.is_available = lambda: False
     torch.cuda.device_count = lambda: 0
     torch.cuda.is_initialized = lambda: False
+    if hasattr(torch, '_C') and hasattr(torch._C, '_jit_set_profiling_executor'):
+        torch._C._jit_set_profiling_executor(False)
+        torch._C._jit_set_profiling_mode(False)
 except Exception:
     pass
 
@@ -82,7 +90,8 @@ if models_loaded:
 
             with st.spinner("Stage 1: Running YOLOv8 Spatial Detection..."):
                 # --- STAGE 1: YOLO OBJECT DETECTION & PRIORITY CROPPING ---
-                results = yolo_model(image, device='cpu', verbose=False)
+                with torch.no_grad():
+                    results = yolo_model(image, device='cpu', verbose=False)
                 boxes = results[0].boxes
                 yolo_dictionary = results[0].names
 
