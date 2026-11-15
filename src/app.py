@@ -1,6 +1,15 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
+# Disable CUDA in PyTorch before any framework initializes C++ CUDA/LLVM bindings
+try:
+    import torch
+    torch.cuda.is_available = lambda: False
+    torch.cuda.device_count = lambda: 0
+    torch.cuda.is_initialized = lambda: False
+except Exception:
+    pass
+
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
@@ -34,6 +43,7 @@ def load_pipeline():
     # Model 2: The Sniper (Upgraded to YOLOv8 Medium for high precision)
     # Note: If yolov8l.pt doesn't exist, ultralytics will auto-download it!
     yolo = YOLO(yolo_path)
+    yolo.to('cpu')
     return fructoxis, yolo
 
 
