@@ -1,9 +1,11 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
 import numpy as np
 from ultralytics import YOLO
-import os
 
 # --- 1. PAGE CONFIGURATION & CSS ---
 st.set_page_config(page_title="Fructoxis Vision", page_icon="🍎", layout="wide", initial_sidebar_state="collapsed")
@@ -70,7 +72,7 @@ if models_loaded:
 
             with st.spinner("Stage 1: Running YOLOv8 Spatial Detection..."):
                 # --- STAGE 1: YOLO OBJECT DETECTION & PRIORITY CROPPING ---
-                results = yolo_model(image, verbose=False)
+                results = yolo_model(image, device='cpu', verbose=False)
                 boxes = results[0].boxes
                 yolo_dictionary = results[0].names
 
